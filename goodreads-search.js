@@ -29,25 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error("Download button not found in the DOM");
     } else {
         // Add download button click handler
-        downloadBtn.addEventListener('click', function () {
-            // Create the enhanced data object
-            const enhancedDataObj = {
-                scrapeDate: new Date().toISOString(),
-                totalBooks: enhancedData.length,
-                books: enhancedData
-            };
-
-            // Convert to JSON and download
-            const jsonData = JSON.stringify(enhancedDataObj, null, 2);
-            const dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonData);
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-
-            chrome.downloads.download({
-                url: dataUrl,
-                filename: `enhanced-kindle-data-${timestamp}.json`,
-                saveAs: false
-            });
-        });
+        downloadBtn.addEventListener('click', downloadEnhancedData);
     }
 
     chrome.storage.local.get(['kindleLibraryData'], function (result) {
@@ -89,7 +71,10 @@ function processNextBook() {
     if (currentBookIndex >= booksData.length) {
         statusDiv.textContent = `Completed! Processed ${enhancedData.length} books.`;
         stopBtn.classList.add('hidden');
-        downloadBtn.classList.remove('hidden');
+        
+        // Automatically download the data when complete
+        downloadEnhancedData();
+        
         return;
     }
 
@@ -154,6 +139,27 @@ function processNextBook() {
 
         currentBookIndex++;
         setTimeout(processNextBook, 1000);
+    });
+}
+
+// Function to download the enhanced data
+function downloadEnhancedData() {
+    // Create the enhanced data object
+    const enhancedDataObj = {
+        scrapeDate: new Date().toISOString(),
+        totalBooks: enhancedData.length,
+        books: enhancedData
+    };
+
+    // Convert to JSON and download
+    const jsonData = JSON.stringify(enhancedDataObj, null, 2);
+    const dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonData);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+    chrome.downloads.download({
+        url: dataUrl,
+        filename: `enhanced-kindle-data-${timestamp}.json`,
+        saveAs: false
     });
 }
 

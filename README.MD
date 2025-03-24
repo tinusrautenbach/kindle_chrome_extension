@@ -7,7 +7,7 @@ A Chrome extension to enhance your Kindle library by scraping book data, finding
 1. Download or clone this repository to your local machine
 2. Open Chrome and navigate to `chrome://extensions/`
 3. Enable "Developer mode" using the toggle in the top-right corner
-4. Click "Load unpacked" and select the `/home/tr/Documents/kindle_chrome_extension` directory
+4. Click "Load unpacked" and select the `/DOWNLOAD_DIRECTORY/kindle_chrome_extension` directory
 5. The extension icon should now appear in your Chrome toolbar
 
 ## Usage
@@ -32,7 +32,9 @@ A Chrome extension to enhance your Kindle library by scraping book data, finding
    - Search for matching books on Goodreads
    - Extract additional data like genres, ISBN, publication dates, and ratings
    - Allow you to stop the process at any time using the "Stop Processing" button
-4. When complete, click the "Download Enhanced Data" button to save the enriched data as a JSON file
+4. You can stop the process mid way and "Download Enhanced Data"
+5. When process completed,  the JSON file with data will be automatically downloaded by your browser to your Download folder 
+
 
 ### Step 3: View Library Stats
 
