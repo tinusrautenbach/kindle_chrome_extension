@@ -52,33 +52,162 @@ button:hover {
   gap: 5px;
 }
 
+.search-wrapper {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.search-box {
+  flex: 1;
+}
+
+.search-box label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.genre-filter-container {
+  position: relative;
+}
+
+.genre-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 100;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  display: none;
+}
+
+.genre-results.active {
+  display: block;
+}
+
+.genre-item {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.genre-item:hover {
+  background-color: #f5f5f5;
+}
+
+.genre-badge {
+  display: inline-block;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+.genre-badge .remove {
+  margin-left: 5px;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+}
+
+.active-filters-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.active-filters {
+  flex: 1;
+}
+
+.clear-btn {
+  display: none; /* Hide by default, we'll show it when needed */
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.clear-btn:hover {
+  background-color: #d32f2f;
+}
+
 input[type="text"] {
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
   min-width: 250px;
+  width: 250px;
 }
 
 .content {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-.stats-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: auto auto;
   gap: 20px;
+  grid-template-areas: 
+    "books summary"
+    "books chart";
 }
 
-.chart-container {
-  flex: 2;
+.books-container {
+  grid-area: books;
   background-color: #fff;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  min-height: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.stats-summary {
+  grid-area: summary;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stats-summary h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #333;
+}
+
+#superGenresChart {
+  margin-top: 10px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 5px;
+}
+
+.chart-container {
+  grid-area: chart;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stats-container {
+  display: none; /* Hide this as we're now using grid areas */
 }
 
 .chart-container h2 {
@@ -94,19 +223,15 @@ input[type="text"] {
   font-style: italic;
 }
 
-.stats-summary {
-  flex: 1;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.books-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
 }
 
-.books-container {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.books-header h2 {
+  margin: 0;
 }
 
 .filter-options {
@@ -200,6 +325,15 @@ select {
 .rating-stars {
   color: #ffc107;
   margin-right: 5px;
+  font-family: "Font Awesome 5 Free", Arial, sans-serif;
+}
+
+.rating-stars .filled {
+  color: #ffc107;
+}
+
+.rating-stars .empty {
+  color: #e0e0e0;
 }
 
 .book-pubdate {
@@ -435,6 +569,7 @@ select {
   bottom: 4px;
   background-color: white;
   transition: .4s;
+  border-radius: 50%; /* Ensure this is set for the round button */
 }
 
 input:checked + .slider {
@@ -453,10 +588,6 @@ input:checked + .slider:before {
   border-radius: 24px;
 }
 
-.slider.round:before {
-  border-radius: 50%;
-}
-
 .sample-badge {
   background-color: #ff9800;
   color: white;
@@ -467,4 +598,36 @@ input:checked + .slider:before {
   display: inline-block;
   margin-bottom: 5px;
   text-transform: uppercase;
+}
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.scroll-btn {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.scroll-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.scroll-info {
+  margin: 0 10px;
+  font-size: 12px;
+  color: #666;
 }

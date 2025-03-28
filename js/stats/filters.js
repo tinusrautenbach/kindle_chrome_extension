@@ -12,7 +12,30 @@ function filterBooks() {
       return false;
     }
     
-    // Genre filter
+    // Genre filter - now handling multiple genres
+    if (currentFilter.genres && currentFilter.genres.length > 0) {
+      let matchesAnyGenre = false;
+      
+      for (const filterGenre of currentFilter.genres) {
+        const normalizedFilterGenre = filterGenre.toLowerCase().trim();
+        
+        // Check in gd_genre
+        if (book.goodreads && book.goodreads.gd_genre && Array.isArray(book.goodreads.gd_genre)) {
+          for (const genreObj of book.goodreads.gd_genre) {
+            if (genreObj && genreObj.name && genreObj.name.toLowerCase().trim() === normalizedFilterGenre) {
+              matchesAnyGenre = true;
+              break;
+            }
+          }
+        }
+        
+        if (matchesAnyGenre) break; // No need to check other genres if we found a match
+      }
+      
+      if (!matchesAnyGenre) return false;
+    }
+    
+    // Single genre filter (legacy support)
     if (currentFilter.genre) {
       let hasGenre = false;
       const normalizedFilterGenre = currentFilter.genre.toLowerCase().trim();
@@ -109,4 +132,22 @@ function sortBooks(books) {
         return 0;
     }
   });
+}
+
+// Clear all genre filters
+function clearAllGenreFilters() {
+  if (!currentFilter.genres || currentFilter.genres.length === 0) {
+    return;
+  }
+  
+  currentFilter.genres = null;
+  
+  // Update UI
+  updateActiveGenreFilters();
+  
+  // Apply filters
+  displayBooks(filterBooks());
+  
+  // Update title
+  updateFilterTitle();
 }

@@ -8,6 +8,9 @@
   
   <!-- Include the split JavaScript files in correct dependency order -->
   <script src="js/stats/utils.js"></script>
+  <script src="js/stats/charts/bar.js"></script>
+  <script src="js/stats/charts/polar.js"></script>
+  <script src="js/stats/charts/bubble.js"></script>
   <script src="js/stats/charts.js"></script>
   <script src="js/stats/filters.js"></script>
   <script src="js/stats/ui.js"></script>
@@ -20,37 +23,38 @@
       <div class="actions">
         <button id="loadDataBtn">Load Data</button>
         <input type="file" id="fileInput" accept=".json" style="display: none;">
-        <div class="search-container">
-          <input type="text" id="searchInput" placeholder="Search by author or title...">
-          <button id="searchBtn">Search</button>
-        </div>
       </div>
     </header>
 
     <div class="content">
-      <div class="stats-container">
-        <div class="chart-container">
-          <h2>Books by Genre</h2>
-          <div style="position: relative; height: 400px; width: 100%;">
-            <canvas id="genreChart"></canvas>
-          </div>
-          <!-- Add instructions for the user -->
-          <p class="chart-instructions">Click on a genre to filter the books below. Click again to show all books.</p>
-        </div>
-        <div class="stats-summary">
-          <h2>Library Summary</h2>
-          <div id="librarySummary">
-            <p>Total Books: <span id="totalBooks">0</span></p>
-            <p>Sample Books: <span id="sampleBooks">0</span></p>
-            <p>Average Rating: <span id="avgRating">0</span></p>
-            <p>Unique Genres: <span id="totalGenres">0</span></p>
-            <p>Unique Authors: <span id="totalAuthors">0</span></p>
-          </div>
-        </div>
-      </div>
-
       <div class="books-container">
-        <h2 id="booksListTitle">All Books</h2>
+        <div class="books-header">
+          <h2 id="booksListTitle">All Books</h2>
+        </div>
+        
+        <div class="search-wrapper">
+          <div class="search-box">
+            <label for="searchInput">Search by Title/Author:</label>
+            <div class="search-container">
+              <input type="text" id="searchInput" placeholder="Search by author or title...">
+              <button id="searchBtn">Search</button>
+            </div>
+          </div>
+          
+          <div class="search-box">
+            <label for="genreSearch">Search by Genre:</label>
+            <div class="genre-filter-container">
+              <input type="text" id="genreSearch" placeholder="Type to find genres...">
+              <div id="genreResults" class="genre-results"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="active-filters-container">
+          <div id="activeGenreFilters" class="active-filters"></div>
+          <button id="clearGenresBtn" class="clear-btn">Clear All Genres</button>
+        </div>
+        
         <div class="filter-options">
           <div class="filter-group">
             <select id="sortOptions">
@@ -75,14 +79,36 @@
         <div id="booksList" class="books-list"></div>
       </div>
 
-      <div id="bookModal" class="modal">
-        <div class="modal-content">
-          <span class="close-btn">&times;</span>
-          <div id="bookDetails"></div>
+      <div class="stats-summary">
+        <h2>Library Summary</h2>
+        <div id="librarySummary">
+          <p>Total Books: <span id="totalBooks">0</span></p>
+          <p>Sample Books: <span id="sampleBooks">0</span></p>
+          <p>Average Rating: <span id="avgRating">0</span></p>
+          <p>Unique Genres: <span id="totalGenres">0</span></p>
+          <p>Unique Authors: <span id="totalAuthors">0</span></p>
         </div>
+        
+        <h3>Categories</h3>
+        <div id="superGenresChart" style="height: 108px;"></div>
+        <p class="chart-instructions">Click on a category to filter books.</p>
+      </div>
+
+      <div class="chart-container">
+        <h2>Books by Genre</h2>
+        <div style="position: relative; height: 400px; width: 100%;">
+          <canvas id="genreChart"></canvas>
+        </div>
+        <p class="chart-instructions">Click on a genre to filter the books below. Click again to show all books.</p>
       </div>
     </div>
   </div>
 
+  <div id="bookModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <div id="bookDetails"></div>
+    </div>
+  </div>
 </body>
 </html>

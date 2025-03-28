@@ -24,23 +24,10 @@ function updateLibrarySummary() {
   // Count unique genres
   const genres = new Set();
   books.forEach(book => {
-    if (book.goodreads && book.goodreads.genres) {
-      book.goodreads.genres.forEach(genre => genres.add(genre));
+    if (book.goodreads && book.goodreads.gd_genre) {
+      book.goodreads.gd_genre.forEach(genre => genres.add(genre.name));
     }
-    if (book.goodreads && book.goodreads.bookMetaData && book.goodreads.bookMetaData.genre) {
-      if (Array.isArray(book.goodreads.bookMetaData.genre)) {
-        book.goodreads.bookMetaData.genre.forEach(g => genres.add(g));
-      } else {
-        genres.add(book.goodreads.bookMetaData.genre);
-      }
-    }
-    if (book.goodreads && book.goodreads.gd_genre && Array.isArray(book.goodreads.gd_genre)) {
-      book.goodreads.gd_genre.forEach(genreObj => {
-        if (genreObj && genreObj.name) {
-          genres.add(genreObj.name);
-        }
-      });
-    }
+   
   });
   
   // Count unique authors
@@ -49,13 +36,7 @@ function updateLibrarySummary() {
     if (book.s_author) {
       authors.add(book.s_author);
     }
-    if (book.goodreads && book.goodreads.bookMetaData && book.goodreads.bookMetaData.author) {
-      if (Array.isArray(book.goodreads.bookMetaData.author)) {
-        book.goodreads.bookMetaData.author.forEach(a => authors.add(a.name));
-      } else if (book.goodreads.bookMetaData.author.name) {
-        authors.add(book.goodreads.bookMetaData.author.name);
-      }
-    }
+    
   });
   
   // Update the DOM
@@ -66,6 +47,34 @@ function updateLibrarySummary() {
   document.getElementById('totalAuthors').textContent = authors.size;
 }
 
+// Update active genre filters display
+function updateActiveGenreFilters() {
+  const container = document.getElementById('activeGenreFilters');
+  const clearBtn = document.getElementById('clearGenresBtn');
+  container.innerHTML = '';
+  
+  if (!currentFilter.genres || currentFilter.genres.length === 0) {
+    clearBtn.style.display = 'none';
+    return;
+  }
+  
+  container.innerHTML = '<strong>Active Genre Filters:</strong> ';
+  
+  currentFilter.genres.forEach(genre => {
+    const badge = document.createElement('span');
+    badge.className = 'genre-badge';
+    badge.innerHTML = `${genre} <span class="remove">×</span>`;
+    
+    badge.querySelector('.remove').addEventListener('click', function() {
+      removeGenreFilter(genre);
+    });
+    
+    container.appendChild(badge);
+  });
+  
+  // Show the clear button when we have genre filters
+  clearBtn.style.display = 'block';
+}
 
 // Display books in the book list
 function displayBooks(books) {
@@ -96,12 +105,27 @@ function displayBooks(books) {
       rating = parseFloat(book.goodreads.bookMetaData.aggregateRating.ratingValue).toFixed(1);
     }
     
+    // Create stars representation using Unicode characters
+    const fullStars = Math.floor(parseFloat(rating));
+    const hasHalfStar = parseFloat(rating) - fullStars >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    let starsHtml = '';
+    for (let i = 0; i < fullStars; i++) {
+      starsHtml += '<span class="filled">&#9734;</span>';
+    }
+    if (hasHalfStar) {
+      starsHtml += '<span class="filled">&frac12;</span>';
+    }
+    for (let i = 0; i < emptyStars; i++) {
+      starsHtml += '<span class="empty">&#10027;</span>';
+    }
+    
     // Get publication date
     let pubDate = 'Unknown';
     if (book.goodreads && book.goodreads.details) {
       pubTimeInMills = book.goodreads.details.publicationTime || 'Unknown';
-      pubDate = formatDate(pubTimeInMills);// new Date(pubTimeInMills).toLocaleDateString();
-      
+      pubDate = formatDate(pubTimeInMills);
     } else if (book.goodreads && book.goodreads.bookMetaData && 
                book.goodreads.bookMetaData.datePublished) {
       pubDate = book.goodreads.bookMetaData.datePublished;
@@ -109,9 +133,6 @@ function displayBooks(books) {
     
     // Check if the book is a sample
     const isSample = book.is_sample ? true : false;
-    
-    // Create stars representation
-    const stars = '★'.repeat(Math.round(parseFloat(rating))) + '☆'.repeat(5 - Math.round(parseFloat(rating)));
     
     // Create the HTML structure without inline event handlers
     bookCard.innerHTML = `
@@ -122,7 +143,7 @@ function displayBooks(books) {
         <div class="book-pubdate">Published: ${pubDate}</div>
         ${isSample ? '<div class="sample-badge">Sample</div>' : ''}
         <div class="book-rating">
-          <span class="rating-stars">${stars}</span>
+          <span class="rating-stars">${starsHtml}</span>
           <span>${isNaN(rating) ? 'N/A' : rating}</span>
         </div>
       </div>
@@ -130,9 +151,6 @@ function displayBooks(books) {
     
     // Add event listener for image error
     const coverImage = bookCard.querySelector('.book-cover');
-    //coverImage.addEventListener('error', function() {
-    //  this.src = 'https://via.placeholder.com/150x200?text=No+Cover';
-    //});
     
     // Add click event listener for book card
     bookCard.addEventListener('click', function() {
@@ -151,7 +169,7 @@ function showBookDetails(book) {
   // Get book details
   const title = book.s_title || 'Unknown Title';
   const author = book.s_author || 'Unknown Author';
-  const coverUrl = book.goodreads?.bookMetaData?.image;// || 'https://via.placeholder.com/150x200?text=No+Cover';
+  const coverUrl = book.goodreads?.bookMetaData?.image;
   
   // Get additional details from Goodreads data
   const goodreadsUrl = book.goodreads?.goodreadsUrl || '';
@@ -183,6 +201,22 @@ function showBookDetails(book) {
   const rating = book.goodreads?.bookMetaData?.aggregateRating?.ratingValue || 'N/A';
   const ratingCount = book.goodreads?.bookMetaData?.aggregateRating?.ratingCount || 'N/A';
   
+  // Create stars representation
+  const fullStars = Math.floor(parseFloat(rating));
+  const hasHalfStar = parseFloat(rating) - fullStars >= 0.5;
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  
+  let starsHtml = '';
+  for (let i = 0; i < fullStars; i++) {
+    starsHtml += '<span class="filled">&#9734;</span>';
+  }
+  if (hasHalfStar) {
+    starsHtml += '<span class="filled">&frac12;</span>';
+  }
+  for (let i = 0; i < emptyStars; i++) {
+    starsHtml += '<span class="empty">&#10027;</span>';
+  }
+  
   // Get book description
   let description = 'No description available.';
   if (book.goodreads?.bookMetaData?.description) {
@@ -202,7 +236,7 @@ function showBookDetails(book) {
         <div class="book-detail-meta">
           <span class="meta-item"><strong>ISBN:</strong> ${isbn}</span>
           <span class="meta-item"><strong>Published:</strong> ${publishDate}</span>
-          <span class="meta-item"><strong>Rating:</strong> ${rating} (${ratingCount} ratings)</span>
+          <span class="meta-item"><strong>Rating:</strong> <span class="rating-stars">${starsHtml}</span> (${ratingCount} ratings)</span>
         </div>
         <div class="book-genres">
           ${genreTagsHtml}

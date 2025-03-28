@@ -28,16 +28,8 @@ if (Chart) {
           if (!shouldDisplay) return;
           
           // Calculate text size
-          //const fontSize = chart.options.plugins.datalabels.font.size;
           let fontSizeValue = 12;
           
-          //if (typeof fontSize === 'function') {
-          //  fontSizeValue = fontSize({dataset: dataset, dataIndex: index});
-          //} else if (typeof fontSize === 'number') {
-           // fontSizeValue = fontSize;
-         // }
-          
-          //ctx.font = `${chart.options.plugins.datalabels.font.weight || 'normal'} ${fontSizeValue}px sans-serif`;
           ctx.font = `${'normal'} ${fontSizeValue}px sans-serif`;
           
           // Get label
@@ -68,7 +60,6 @@ if (Chart) {
 
 // Chart visualization functions
 
-// Declare genreChart variable at the top of the file
 let genreChart = null;
 
 // Create the genre chart
@@ -79,7 +70,7 @@ function createGenreChart() {
   
   // Count books per genre
   const genreCounts = {};
-  const superGenres = new Set(['Fiction', 'Nonfiction', 'Literature', 'Audiobook', 'Ebook', 'Adult']);
+  const superGenres = new Set(['Fiction', 'Nonfiction', 'Audiobook']);
   const majorGenreCounts = {};
   const subGenreCounts = {};
   
@@ -106,12 +97,13 @@ function createGenreChart() {
     // Sort genres into super genres and sub-genres
     genres.forEach(genre => {
       if (genre && typeof genre === 'string') {
-        // Count all genres
-        genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+        // Skip super genres in the main genre count
+        if (!superGenres.has(genre)) {
+          genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+        }
         
         // Check if this is a super genre
-        if (superGenres.has(genre) || 
-            genres.length > 10 && genreCounts[genre] > libraryData.books.length * 0.2) {
+        if (superGenres.has(genre)) {
           majorGenreCounts[genre] = (majorGenreCounts[genre] || 0) + 1;
         } else {
           subGenreCounts[genre] = (subGenreCounts[genre] || 0) + 1;
@@ -120,18 +112,19 @@ function createGenreChart() {
     });
   });
   
-  console.log("Found", Object.keys(genreCounts).length, "unique genres");
-  
   // Get the top N sub-genres (excluding super genres)
   const topSubGenres = Object.entries(subGenreCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 15); // Top 15 sub-genres
   
-  const majorGenres = Object.entries(majorGenreCounts)
+  // Create the super genres chart in the summary area
+  createSuperGenresChart(majorGenreCounts);
+  
+  // For the main genre chart, use specific genres only (not super genres)
+  const sortedGenres = Object.entries(genreCounts)
     .sort((a, b) => b[1] - a[1]);
   
-  console.log("Top sub-genres:", topSubGenres);
-  console.log("Major genres:", majorGenres);
+  console.log("Found", sortedGenres.length, "unique specific genres");
   
   // Destroy existing chart if it exists
   if (genreChart) {
@@ -179,17 +172,86 @@ function createGenreChart() {
       tab.classList.add('active');
       
       const chartType = tab.dataset.chart;
-      updateChartType(chartType, newCanvas, topSubGenres, majorGenres);
+      updateChartType(chartType, newCanvas, topSubGenres, sortedGenres);
     });
   });
   
   // Initialize with bar chart
-  updateChartType('bar', newCanvas, topSubGenres, majorGenres);
+  updateChartType('bar', newCanvas, topSubGenres, sortedGenres);
+}
+
+// Create a bar chart for super genres
+function createSuperGenresChart(majorGenreCounts) {
+  // Convert to array and sort
+  const superGenres = Object.entries(majorGenreCounts)
+    .sort((a, b) => b[1] - a[1]);
+  
+  if (superGenres.length === 0) return;
+  
+  // Get the container
+  const container = document.getElementById('superGenresChart');
+  if (!container) return;
+  
+  // Clear existing content
+  container.innerHTML = '';
+  
+  // Create canvas
+  const canvas = document.createElement('canvas');
+  canvas.id = 'superGenresCanvas';
+  container.appendChild(canvas);
+  
+  // Create chart
+  const ctx = canvas.getContext('2d');
+  const superGenresChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: superGenres.map(g => g[0]),
+      datasets: [{
+        label: 'Books per Category',
+        data: superGenres.map(g => g[1]),
+        backgroundColor: '#9C27B0', // Purple for super genres
+        borderWidth: 1
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const value = context.raw || 0;
+              return `${value} book${value !== 1 ? 's' : ''}`;
+            }
+          }
+        }
+      },
+      onClick: function(event, elements) {
+        if (!elements || elements.length === 0) return;
+        
+        const index = elements[0].index;
+        const genreLabel = superGenres[index][0];
+        
+        console.log("Clicked on super genre:", genreLabel);
+        
+        // Add or remove this genre filter
+        if (currentFilter.genres && currentFilter.genres.includes(genreLabel)) {
+          removeGenreFilter(genreLabel);
+        } else {
+          addGenreFilter(genreLabel);
+        }
+      }
+    }
+  });
 }
 
 // Function to update chart type based on tab selection
 function updateChartType(chartType, canvas, topSubGenres, majorGenres) {
-  // Destroy existing chart
+  // Destroy existing chart if it exists
   if (genreChart) {
     genreChart.destroy();
   }
@@ -212,9 +274,9 @@ function updateChartType(chartType, canvas, topSubGenres, majorGenres) {
 }
 
 // Create a horizontal bar chart for genres
-function createBarChart(ctx, topSubGenres, majorGenres) {
+function createBarChart(ctx, topSubGenres, sortedGenres) {
   // Combine and sort all genres
-  const allGenres = [...majorGenres, ...topSubGenres].sort((a, b) => b[1] - a[1]).slice(0, 20);
+  const allGenres = [...sortedGenres, ...topSubGenres].sort((a, b) => b[1] - a[1]).slice(0, 20);
   
   // Prepare data for Chart.js
   const labels = allGenres.map(g => g[0]);
@@ -222,7 +284,7 @@ function createBarChart(ctx, topSubGenres, majorGenres) {
   
   // Create different colors for major genres
   const backgroundColors = allGenres.map((g, i) => {
-    const isMajorGenre = majorGenres.some(mg => mg[0] === g[0]);
+    const isMajorGenre = sortedGenres.some(mg => mg[0] === g[0]);
     return isMajorGenre ? '#FF6384' : '#36A2EB';
   });
   
@@ -260,12 +322,12 @@ function createBarChart(ctx, topSubGenres, majorGenres) {
 }
 
 // Create a treemap chart for genres
-function createTreemapChart(ctx, topSubGenres, majorGenres) {
+function createTreemapChart(ctx, topSubGenres, sortedGenres) {
   // Replace treemap with a polar area chart since treemap is not available
   console.log("Treemap not available, using polar area chart instead");
   
   // Combine genres
-  const allGenres = [...majorGenres, ...topSubGenres].slice(0, 30);
+  const allGenres = [...sortedGenres, ...topSubGenres].slice(0, 30);
   
   // Create a dataset for the polar area chart
   const data = {
@@ -273,7 +335,7 @@ function createTreemapChart(ctx, topSubGenres, majorGenres) {
     datasets: [{
       data: allGenres.map(g => g[1]),  // Use book counts as sizes
       backgroundColor: allGenres.map((g, i) => {
-        const isMajorGenre = majorGenres.some(mg => mg[0] === g[0]);
+        const isMajorGenre = sortedGenres.some(mg => mg[0] === g[0]);
         return isMajorGenre ? 'rgba(255, 99, 132, 0.8)' : 'rgba(54, 162, 235, 0.8)';
       })
     }]
@@ -290,12 +352,10 @@ function createTreemapChart(ctx, topSubGenres, majorGenres) {
           position: 'right',
           labels: {
             generateLabels: function(chart) {
-              // In Chart.js 4.x, we use registry instead of defaults
               const original = Chart.registry.getPlugin('legend').defaults.labels.generateLabels;
               const labels = original.call(this, chart);
               
               return labels.slice(0, 15).map(label => {
-                // Truncate long labels
                 if (label.text && label.text.length > 20) {
                   label.text = label.text.substring(0, 17) + '...';
                 }
@@ -318,121 +378,122 @@ function createTreemapChart(ctx, topSubGenres, majorGenres) {
     }
   });
 }
-function createBubbleChart(ctx, topSubGenres, majorGenres) {
-    // Combine genres
-    const allGenres = [...majorGenres, ...topSubGenres].slice(0, 25);
+
+function createBubbleChart(ctx, topSubGenres, sortedGenres) {
+  // Combine genres
+  const allGenres = [...sortedGenres, ...topSubGenres].slice(0, 25);
+  
+  // Generate positions for each bubble
+  const data = [];
+  allGenres.forEach((g, i) => {
+    const isMajorGenre = sortedGenres.some(mg => mg[0] === g[0]);
     
-    // Generate positions for each bubble
-    const data = [];
-    allGenres.forEach((g, i) => {
-      const isMajorGenre = majorGenres.some(mg => mg[0] === g[0]);
-      
-      // Position bubbles in a sort of spiral
-      const angle = i * 0.5;
-      const radius = 5 + i * 0.8;
-      const x = Math.cos(angle) * radius;
-      const y = Math.sin(angle) * radius;
-      
-      data.push({
-        label: g[0],
-        data: [{
-          x: x,
-          y: y,
-          r: Math.sqrt(g[1]) * 5 // Size based on count but not overwhelming
-        }],
-        backgroundColor: isMajorGenre ? 'rgba(255, 99, 132, 0.8)' : 'rgba(54, 162, 235, 0.8)'
-      });
+    // Position bubbles in a sort of spiral
+    const angle = i * 0.5;
+    const radius = 5 + i * 0.8;
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    
+    data.push({
+      label: g[0],
+      data: [{
+        x: x,
+        y: y,
+        r: Math.sqrt(g[1]) * 5 // Size based on count but not overwhelming
+      }],
+      backgroundColor: isMajorGenre ? 'rgba(255, 99, 132, 0.8)' : 'rgba(54, 162, 235, 0.8)'
     });
-    
-    genreChart = new Chart(ctx, {
-      type: 'bubble',
-      data: {
-        datasets: data
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: {
-            display: false,
-            bounds: 'data'
-          },
-          y: {
-            display: false,
-            bounds: 'data'
-          }
+  });
+  
+  genreChart = new Chart(ctx, {
+    type: 'bubble',
+    data: {
+      datasets: data
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          display: false,
+          bounds: 'data'
         },
-        plugins: {
-          legend: {
-            display: false
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                if (!context.dataset || !context.dataset.label) return '';
-                
-                const genreItem = allGenres.find(g => g[0] === context.dataset.label);
-                if (!genreItem) return context.dataset.label;
-                
-                const value = genreItem[1];
-                return `${context.dataset.label}: ${value} book${value !== 1 ? 's' : ''}`;
-              }
+        y: {
+          display: false,
+          bounds: 'data'
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              if (!context.dataset || !context.dataset.label) return '';
+              
+              const genreItem = allGenres.find(g => g[0] === context.dataset.label);
+              if (!genreItem) return context.dataset.label;
+              
+              const value = genreItem[1];
+              return `${context.dataset.label}: ${value} book${value !== 1 ? 's' : ''}`;
             }
           }
-        },
-        onClick: handleChartClick
-      }
-    });
-    
-    // Add a custom plugin to draw labels on bubbles
-    const bubbleLabelPlugin = {
-      id: 'bubbleLabels',
-      afterDatasetsDraw: function(chart) {
-        const ctx = chart.ctx;
-        
-        chart.data.datasets.forEach((dataset, datasetIndex) => {
-          const meta = chart.getDatasetMeta(datasetIndex);
-          if (!meta.hidden) {
-            meta.data.forEach((element, index) => {
-              const data = dataset.data[index];
-              if (!data) return;
-              
-              // Only draw labels for bubbles large enough
-              const radius = data.r || 0;
-              if (radius < 15) return;
-              
-              const label = dataset.label;
-              if (!label) return;
-              
-              // Set up text styling
-              ctx.save();
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillStyle = 'white';
-              
-              // Calculate font size based on bubble size
-              const fontSize = Math.min(Math.max(10, radius / 4), 16);
-              ctx.font = `bold ${fontSize}px Arial`;
-              
-              // Measure text to see if it fits
-              const textMetrics = ctx.measureText(label);
-              const textWidth = textMetrics.width;
-              
-              // Only draw text if it fits within the bubble
-              if (textWidth < radius * 1.8) {
-                ctx.fillText(label, element.x, element.y);
-              }
-              
-              ctx.restore();
-            });
-          }
-        });
-      }
-    };
-    
-    // Register the plugin for this chart instance only
-    Chart.register(bubbleLabelPlugin);
-  }
+        }
+      },
+      onClick: handleChartClick
+    }
+  });
+  
+  // Add a custom plugin to draw labels on bubbles
+  const bubbleLabelPlugin = {
+    id: 'bubbleLabels',
+    afterDatasetsDraw: function(chart) {
+      const ctx = chart.ctx;
+      
+      chart.data.datasets.forEach((dataset, datasetIndex) => {
+        const meta = chart.getDatasetMeta(datasetIndex);
+        if (!meta.hidden) {
+          meta.data.forEach((element, index) => {
+            const data = dataset.data[index];
+            if (!data) return;
+            
+            // Only draw labels for bubbles large enough
+            const radius = data.r || 0;
+            if (radius < 15) return;
+            
+            const label = dataset.label;
+            if (!label) return;
+            
+            // Set up text styling
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'white';
+            
+            // Calculate font size based on bubble size
+            const fontSize = Math.min(Math.max(10, radius / 4), 16);
+            ctx.font = `bold ${fontSize}px Arial`;
+            
+            // Measure text to see if it fits
+            const textMetrics = ctx.measureText(label);
+            const textWidth = textMetrics.width;
+            
+            // Only draw text if it fits within the bubble
+            if (textWidth < radius * 1.8) {
+              ctx.fillText(label, element.x, element.y);
+            }
+            
+            ctx.restore();
+          });
+        }
+      });
+    }
+  };
+  
+  // Register the plugin for this chart instance only
+  Chart.register(bubbleLabelPlugin);
+}
 
 // Handle chart click to filter books
 function handleChartClick(event, elements, chart) {
@@ -444,10 +505,7 @@ function handleChartClick(event, elements, chart) {
   if (chart.config.type === 'polarArea') {
     genreLabel = chart.data.labels[elements[0].index];
   } else if (chart.config.type === 'bubble') {
-    // In Chart.js 4.x, access the datasetIndex safely
     const datasetIndex = elements[0].datasetIndex;
-    
-    // Check if the datasets and the specific dataset exist
     if (chart.data.datasets && 
         datasetIndex !== undefined && 
         chart.data.datasets[datasetIndex] &&
@@ -455,7 +513,7 @@ function handleChartClick(event, elements, chart) {
       genreLabel = chart.data.datasets[datasetIndex].label;
     } else {
       console.error("Unable to determine genre from bubble chart click");
-      return; // Exit if we can't determine the genre
+      return;
     }
   } else {
     genreLabel = chart.data.labels[elements[0].index];
@@ -463,13 +521,11 @@ function handleChartClick(event, elements, chart) {
   
   console.log("Clicked on genre:", genreLabel);
   
-  // Toggle filter
-  if (currentFilter.genre === genreLabel) {
-    currentFilter.genre = null;
-    document.getElementById('booksListTitle').textContent = 'All Books';
+  // Update to use the new multi-genre filter system
+  if (currentFilter.genres && currentFilter.genres.includes(genreLabel)) {
+    removeGenreFilter(genreLabel);
   } else {
-    currentFilter.genre = genreLabel;
-    document.getElementById('booksListTitle').textContent = `Books in "${genreLabel}" Genre`;
+    addGenreFilter(genreLabel);
   }
   
   const filteredBooks = filterBooks();
@@ -484,7 +540,6 @@ function handleChartClick(event, elements, chart) {
 
 // Generate an array of colors for the chart
 function generateColors(count) {
-  // Extended color palette for more genres
   const baseColors = [
     '#4CAF50', '#2196F3', '#FFC107', '#F44336', '#9C27B0',
     '#00BCD4', '#FF9800', '#795548', '#607D8B', '#E91E63',
@@ -493,14 +548,12 @@ function generateColors(count) {
     '#BBD8FA', '#B2EBF2', '#C8E6C9', '#FFF9C4', '#FFCDD2'
   ];
   
-  // If we need more colors than in the base palette, generate them
   if (count > baseColors.length) {
     const extraColors = [];
     for (let i = 0; i < count - baseColors.length; i++) {
-      // Generate random colors with good saturation and lightness
       const hue = Math.floor(Math.random() * 360);
-      const saturation = 70 + Math.floor(Math.random() * 30); // 70-100%
-      const lightness = 45 + Math.floor(Math.random() * 10); // 45-55%
+      const saturation = 70 + Math.floor(Math.random() * 30);
+      const lightness = 45 + Math.floor(Math.random() * 10);
       extraColors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
     }
     return [...baseColors, ...extraColors];
