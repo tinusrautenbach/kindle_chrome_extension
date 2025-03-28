@@ -1,5 +1,6 @@
 # Kindle Library Chrome Extension
 
+
 A Chrome extension to enhance your Kindle library by scraping book data, finding additional information on Goodreads, and providing visual statistics and insights.
 
 ## Installation
@@ -68,3 +69,9 @@ A Chrome extension to enhance your Kindle library by scraping book data, finding
 ## Privacy
 
 All data processing happens on your local machine. The extension does not send your library data to any external servers (other than Goodreads for searching book information).
+
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
