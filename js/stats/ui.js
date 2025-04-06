@@ -219,8 +219,8 @@ function showBookDetails(book) {
   
   // Get book description
   let description = 'No description available.';
-  if (book.goodreads?.bookMetaData?.description) {
-    description = book.goodreads.bookMetaData.description;
+  if (book.goodreads?.description) {
+    description = book.goodreads.description;
   }
   
   // Create genre tags HTML

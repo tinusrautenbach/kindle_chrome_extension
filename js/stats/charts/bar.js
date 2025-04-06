@@ -2,22 +2,22 @@
 
 // Create a horizontal bar chart for genres
 function createBarChart(ctx, topSubGenres, majorGenres) {
-  // Combine and sort all genres - show more genres since we'll have scrolling
-  // Fix duplicates by ensuring each genre appears only once
-  const uniqueGenres = new Map();
+  // Create a Set of genre names to track duplicates
+  const seenGenres = new Set();
   
-  // Add all genres to the map, with the count as the value
-  topSubGenres.forEach(([genre, count]) => {
-    // If the genre is already in the map, only update if the new count is higher
-    if (!uniqueGenres.has(genre) || uniqueGenres.get(genre) < count) {
-      uniqueGenres.set(genre, count);
+  // Filter out duplicates by only including each genre once
+  const uniqueSubGenres = topSubGenres.filter(([genre]) => {
+    if (seenGenres.has(genre)) {
+      return false; // Skip this duplicate
     }
+    seenGenres.add(genre);
+    return true;
   });
   
-  // Convert back to array and sort
-  const allGenres = Array.from(uniqueGenres.entries())
+  // Combine and sort all genres
+  const allGenres = uniqueSubGenres
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 50);
+    .slice(0, 200); // Increased from 100 to 200 to include more genres
   
   // Prepare data for Chart.js
   const labels = allGenres.map(g => g[0]);
@@ -34,7 +34,9 @@ function createBarChart(ctx, topSubGenres, majorGenres) {
         label: 'Books per Genre',
         data: data,
         backgroundColor: backgroundColors,
-        borderWidth: 1
+        borderWidth: 1,
+        barThickness: 'flex',
+        barPercentage: 0.5 // Reduce bar height by half
       }]
     },
     options: {
@@ -45,7 +47,7 @@ function createBarChart(ctx, topSubGenres, majorGenres) {
         y: {
           // Set min and max to control how many bars are visible at once
           min: 0,
-          max: 9, // Show 10 items (0-9)
+          max: 14, // Show 15 items (0-14)
           ticks: {
             autoSkip: false
           }
@@ -76,37 +78,95 @@ function createBarChart(ctx, topSubGenres, majorGenres) {
 function addScrollingControls(canvas, totalItems) {
   const container = canvas.parentNode;
   
+  // Remove any existing controls first to avoid duplicates
+  const existingControls = container.querySelector('.chart-controls');
+  if (existingControls) {
+    existingControls.remove();
+  }
+  
   // Create the controls container
   const controlsContainer = document.createElement('div');
   controlsContainer.className = 'chart-controls';
-  controlsContainer.innerHTML = `
-    <button class="scroll-btn" data-direction="up">▲</button>
-    <div class="scroll-info">Showing 1-10 of ${totalItems}</div>
-    <button class="scroll-btn" data-direction="down">▼</button>
-  `;
+  
+  // Apply styles directly to ensure visibility
+  controlsContainer.style.display = 'flex';
+  controlsContainer.style.alignItems = 'center';
+  controlsContainer.style.justifyContent = 'center';
+  controlsContainer.style.marginTop = '20px';
+  controlsContainer.style.width = '100%';
+  controlsContainer.style.padding = '10px 0';
+  
+  // Create buttons and info elements directly instead of using innerHTML
+  const upButton = document.createElement('button');
+  upButton.className = 'scroll-btn';
+  upButton.setAttribute('data-direction', 'up');
+  upButton.textContent = '-';  // Changed to '-'
+  upButton.style.backgroundColor = '#4285f4';
+  upButton.style.color = 'white';
+  upButton.style.border = 'none';
+  upButton.style.borderRadius = '50%';
+  upButton.style.width = '36px';
+  upButton.style.height = '36px';
+  upButton.style.display = 'flex';
+  upButton.style.alignItems = 'center';
+  upButton.style.justifyContent = 'center';
+  upButton.style.margin = '0 5px';
+  upButton.style.cursor = 'pointer';
+  upButton.style.fontSize = '18px';
+  upButton.style.fontWeight = 'bold';
+  upButton.style.zIndex = '100';
+  
+  const scrollInfo = document.createElement('div');
+  scrollInfo.className = 'scroll-info';
+  scrollInfo.textContent = `Showing 1-15 of ${totalItems}`;  // Updated to show 15
+  scrollInfo.style.margin = '0 15px';
+  scrollInfo.style.fontSize = '13px';
+  scrollInfo.style.color = '#555';
+  
+  const downButton = document.createElement('button');
+  downButton.className = 'scroll-btn';
+  downButton.setAttribute('data-direction', 'down');
+  downButton.textContent = '+';  // Changed to '+'
+  downButton.style.backgroundColor = '#4285f4';
+  downButton.style.color = 'white';
+  downButton.style.border = 'none';
+  downButton.style.borderRadius = '50%';
+  downButton.style.width = '36px';
+  downButton.style.height = '36px';
+  downButton.style.display = 'flex';
+  downButton.style.alignItems = 'center';
+  downButton.style.justifyContent = 'center';
+  downButton.style.margin = '0 5px';
+  downButton.style.cursor = 'pointer';
+  downButton.style.fontSize = '18px';
+  downButton.style.fontWeight = 'bold';
+  downButton.style.zIndex = '100';
+  
+  // Append elements to the container
+  controlsContainer.appendChild(upButton);
+  controlsContainer.appendChild(scrollInfo);
+  controlsContainer.appendChild(downButton);
   
   // Insert after the canvas
   container.appendChild(controlsContainer);
   
-  // Add event listeners
-  const upButton = controlsContainer.querySelector('[data-direction="up"]');
-  const downButton = controlsContainer.querySelector('[data-direction="down"]');
-  const scrollInfo = controlsContainer.querySelector('.scroll-info');
-  
   // Current view window
   let startIndex = 0;
-  const viewSize = 10;
+  const viewSize = 15; // Changed to 15 to match the chart display
   
+  // Add event listeners
   upButton.addEventListener('click', () => {
     if (startIndex > 0) {
-      startIndex--;
+      // Scroll by 15 at a time
+      startIndex = Math.max(0, startIndex - 15);
       updateChartView();
     }
   });
   
   downButton.addEventListener('click', () => {
     if (startIndex + viewSize < totalItems) {
-      startIndex++;
+      // Scroll by 15 at a time
+      startIndex = Math.min(totalItems - viewSize, startIndex + 15);
       updateChartView();
     }
   });
@@ -122,12 +182,18 @@ function addScrollingControls(canvas, totalItems) {
     
     // Update button states
     upButton.disabled = startIndex === 0;
+    upButton.style.backgroundColor = startIndex === 0 ? '#ccc' : '#4285f4';
+    
     downButton.disabled = startIndex + viewSize >= totalItems;
+    downButton.style.backgroundColor = startIndex + viewSize >= totalItems ? '#ccc' : '#4285f4';
   }
   
   // Initialize button states
   upButton.disabled = startIndex === 0;
+  upButton.style.backgroundColor = startIndex === 0 ? '#ccc' : '#4285f4';
+  
   downButton.disabled = startIndex + viewSize >= totalItems;
+  downButton.style.backgroundColor = startIndex + viewSize >= totalItems ? '#ccc' : '#4285f4';
 }
 
 // Create a bar chart for super genres
