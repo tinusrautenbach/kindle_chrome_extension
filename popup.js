@@ -7,8 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
   let scrapedData = null;
   
   // Function to update status
-  function updateStatus(message, type = 'info') {
-    statusDiv.textContent = message;
+  function updateStatus(message, type = 'info', isHTML = false) {
+    if (isHTML) {
+      statusDiv.innerHTML = message;
+    } else {
+      statusDiv.textContent = message;
+    }
     statusDiv.className = 'status ' + type;
   }
   
@@ -21,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Check if the current page is the Kindle library
       if (!activeTab.url.includes('read.amazon.com/kindle-library')) {
-        updateStatus('Please navigate to your Kindle Library first!', 'error');
+        updateStatus('Please navigate to your <a href="https://read.amazon.com/kindle-library" target="_blank">Kindle Library</a> first!', 'error', true);
         return;
       }
       

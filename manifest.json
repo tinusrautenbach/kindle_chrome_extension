@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Kindle Chrome Extension",
+  "name": "Kindle Library Organizer",
   "version": "1.0",
-  "description": "Scrape content from webpages",
+  "description": "Better search and visibility for your Kindle library. The extension helps you search through your library, by author, title, genre.",
   "permissions": ["activeTab", "scripting", "storage", "downloads"],
-  "host_permissions": ["<all_urls>", "https://www.goodreads.com/*"],
+  "host_permissions": ["https://read.amazon.com/*", "https://www.goodreads.com/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

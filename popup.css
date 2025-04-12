@@ -37,8 +37,16 @@ h2 {
 
 .icon {
   margin-right: 10px;
-  font-size: 18px;
-  font-family: Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+
+.icon img {
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .status {
@@ -58,6 +66,17 @@ h2 {
 .status.error {
   background-color: #f8d7da;
   color: #721c24;
+}
+
+.status.error a {
+  color: #0056b3;
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+.status.error a:hover {
+  text-decoration: none;
+  color: #003d80;
 }
 
 .status.info {

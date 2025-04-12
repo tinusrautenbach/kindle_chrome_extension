@@ -51,6 +51,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.error("Download failed:", chrome.runtime.lastError);
       } else {
         console.log("Download started with ID:", downloadId);
+        
+        // After successful download, automatically start the Goodreads search process
+        // Short delay to ensure download has started
+        setTimeout(() => {
+          console.log("Automatically starting Goodreads search...");
+          // Create a new tab with the goodreads-search.html page
+          chrome.tabs.create({url: 'goodreads-search.html'});
+        }, 1000);
       }
     });
   }

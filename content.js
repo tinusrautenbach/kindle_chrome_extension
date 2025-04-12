@@ -14,6 +14,7 @@ function scrapepage() {
   loadingIndicator.style.backgroundColor = "blue";
   loadingIndicator.style.color = "white";
   loadingIndicator.style.zIndex = "9999";
+  loadingIndicator.style.borderRadius = "5px";
   loadingIndicator.textContent = "Scrolling to load all content...";
   document.body.appendChild(loadingIndicator);
   
@@ -31,26 +32,52 @@ function scrapepage() {
       
       let lastHeight = libraryDiv.scrollHeight;
       let scrollAttempts = 0;
-      const maxScrollAttempts = 20; // Limit scrolling attempts
+      let noChangeCount = 0;
+      const maxScrollAttempts = 100; // Increased max scroll attempts
+      const scrollDelay = 1500; // Increased wait time between scrolls (1.5 seconds)
+      const consecutiveNoChangeThreshold = 5; // Number of times height remains unchanged before concluding
+      
+      // Update loading indicator with progress
+      function updateLoadingStatus() {
+        loadingIndicator.textContent = `Scrolling to load all content... (${scrollAttempts}/${maxScrollAttempts})`;
+      }
       
       function tryScroll() {
         // Scroll the library div instead of the window
         libraryDiv.scrollTo(0, libraryDiv.scrollHeight);
         scrollAttempts++;
+        updateLoadingStatus();
         
         setTimeout(() => {
           const newHeight = libraryDiv.scrollHeight;
+          console.log(`Scroll attempt ${scrollAttempts}, height: ${newHeight}, last height: ${lastHeight}`);
           
-          // If height hasn't changed or we've reached max attempts, we've likely reached the bottom
-          if (newHeight === lastHeight || scrollAttempts >= maxScrollAttempts) {
-            // Scroll back to top for better UX
-            libraryDiv.scrollTo(0, 0);
-            resolve();
+          // Check if height hasn't changed
+          if (newHeight === lastHeight) {
+            noChangeCount++;
+            console.log(`No change count: ${noChangeCount}/${consecutiveNoChangeThreshold}`);
+          } else {
+            // Reset the counter if height changed
+            noChangeCount = 0;
+          }
+          
+          // If height hasn't changed for consecutive times or we've reached max attempts, we've likely reached the bottom
+          if ((noChangeCount >= consecutiveNoChangeThreshold) || scrollAttempts >= maxScrollAttempts) {
+            console.log("Finished scrolling. All content should be loaded.");
+            // Perform one final scroll just to be sure
+            libraryDiv.scrollTo(0, libraryDiv.scrollHeight);
+            
+            // Wait a bit longer before finalizing to ensure all content is loaded
+            setTimeout(() => {
+              // Scroll back to top for better UX
+              libraryDiv.scrollTo(0, 0);
+              resolve();
+            }, 2000); // Wait 2 seconds after final scroll
           } else {
             lastHeight = newHeight;
             tryScroll();
           }
-        }, 800); // Wait for content to load
+        }, scrollDelay);
       }
       
       tryScroll();
@@ -76,8 +103,7 @@ function scrapepage() {
       if (id_f && id_f.includes('-')) {
         const parts = id_f.split('-');
         asin = parts[parts.length - 1]; // Get the last part after the final hyphen
-      }else
-      {
+      } else {
         return null;
       }
       if (id_f && id_f.includes('sample')) {
@@ -91,18 +117,17 @@ function scrapepage() {
       // Attempt to find title and author from divs
       // This is a simple approach - you may need to adjust based on the actual structure
       if (divElements.length >= 1) {
-          for (let i = 0; i < divElements.length; i++) {
-              const divID = divElements[i].id.trim();
-              if (divID.includes('title-')) {
-                  s_title = divElements[i].textContent.trim();
-              } else if (divID.includes('author')) {
-                  s_author = divElements[i].textContent.trim();
-              }
+        for (let i = 0; i < divElements.length; i++) {
+          const divID = divElements[i].id.trim();
+          if (divID.includes('title-')) {
+            s_title = divElements[i].textContent.trim();
+          } else if (divID.includes('author')) {
+            s_author = divElements[i].textContent.trim();
           }
-        
+        }
       }
       
-      return   {
+      return {
         index: index,
         text: item.textContent.trim(),
         html: item.innerHTML,
@@ -116,7 +141,6 @@ function scrapepage() {
       };
     });
     
-
     // Filter out null values from the listItemsContent
     const filteredListItemsContent = listItemsContent.filter(item => item !== null);
     // Create a result object with the scraped data
@@ -144,7 +168,7 @@ function scrapepage() {
     });
     
     // Update feedback
-    loadingIndicator.textContent = `Page scraped successfully! Found ${listItemsContent.length} list items.`;
+    loadingIndicator.textContent = `Page scraped successfully! Found ${filteredListItemsContent.length} books.`;
     
     // Remove the feedback after 3 seconds
     setTimeout(() => {

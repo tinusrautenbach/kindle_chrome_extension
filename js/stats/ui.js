@@ -196,7 +196,12 @@ function showBookDetails(book) {
   // Get book details
   const title = book.s_title || 'Unknown Title';
   const author = book.s_author || 'Unknown Author';
-  const coverUrl = book.goodreads?.bookMetaData?.image;
+  
+  // Get book cover image with a fallback
+  let coverUrl = 'https://via.placeholder.com/150x220?text=No+Cover';
+  if (book.goodreads?.bookMetaData?.image) {
+    coverUrl = book.goodreads.bookMetaData.image;
+  }
   
   // Get additional details from Goodreads data
   const goodreadsUrl = book.goodreads?.goodreadsUrl || '';
@@ -250,13 +255,77 @@ function showBookDetails(book) {
     description = book.goodreads.description;
   }
   
+  // Get rating distribution from Goodreads data
+  let ratingDistribution = {
+    5: 0, 4: 0, 3: 0, 2: 0, 1: 0
+  };
+  
+  // Check if rating distribution data exists
+  if (book.goodreads?.ratingDistribution) {
+    ratingDistribution = book.goodreads.ratingDistribution;
+  } else if (book.goodreads?.bookMetaData?.ratingDistribution) {
+    ratingDistribution = book.goodreads.bookMetaData.ratingDistribution;
+  }
+  
+  // Calculate percentages for rating bars
+  let totalRatings = 0;
+  for (const stars in ratingDistribution) {
+    if (ratingDistribution.hasOwnProperty(stars)) {
+      totalRatings += ratingDistribution[stars];
+    }
+  }
+  
+  // If no distribution data found, create a reasonable estimate based on average rating
+  if (totalRatings === 0 && !isNaN(parseFloat(rating)) && ratingCount !== 'N/A') {
+    // Estimate distribution based on average rating
+    const avgRating = parseFloat(rating);
+    totalRatings = parseInt(ratingCount) || 100;
+    
+    // Create a bell curve centered on the average rating
+    const maxStar = Math.round(avgRating);
+    ratingDistribution[maxStar] = Math.floor(totalRatings * 0.5); // 50% at peak
+    
+    // Distribute the rest based on distance from average
+    for (let star = 1; star <= 5; star++) {
+      if (star !== maxStar) {
+        const distance = Math.abs(star - avgRating);
+        const portion = Math.max(0.05, 0.3 - (distance * 0.15)); // Further stars get less
+        ratingDistribution[star] = Math.floor(totalRatings * portion);
+      }
+    }
+    
+    // Adjust to ensure total is correct
+    let distributedTotal = 0;
+    for (const star in ratingDistribution) {
+      distributedTotal += ratingDistribution[star];
+    }
+    
+    // Add any remaining to the max star
+    if (distributedTotal < totalRatings) {
+      ratingDistribution[maxStar] += (totalRatings - distributedTotal);
+    }
+  }
+  
+  // Calculate percentages (avoid division by zero)
+  const ratingPercentages = {};
+  if (totalRatings > 0) {
+    for (const stars in ratingDistribution) {
+      if (ratingDistribution.hasOwnProperty(stars)) {
+        ratingPercentages[stars] = Math.round((ratingDistribution[stars] / totalRatings) * 100);
+      }
+    }
+  } else {
+    // Default values if no distribution data
+    ratingPercentages = {5: 70, 4: 20, 3: 5, 2: 3, 1: 2};
+  }
+  
   // Create genre tags HTML
   const genreTagsHtml = genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('');
   
   // Build the HTML without inline event handlers
   detailsContainer.innerHTML = `
     <div class="book-detail-header">
-      <img src="${coverUrl}" alt="${title}" class="book-detail-cover">
+      <img src="${coverUrl}" alt="${title}" class="book-detail-cover" onerror="this.src='https://via.placeholder.com/150x220?text=No+Cover'">
       <div class="book-detail-info">
         <h2 class="book-detail-title">${title}</h2>
         <p class="book-detail-author">by ${author}</p>
@@ -279,50 +348,45 @@ function showBookDetails(book) {
       <p>${description}</p>
     </div>
     <div class="rating-details">
-      <h3>Rating Details</h3>
+      <h3>Rating Distribution</h3>
       <div class="rating-container">
-        <span class="rating-label">5 ★</span>
+        <span class="rating-label">5 &#9733;</span>
         <div class="rating-bar-container">
-          <div class="rating-bar" style="width: 70%"></div>
+          <div class="rating-bar" style="width: ${ratingPercentages[5]}%"></div>
         </div>
-        <span class="rating-count">70%</span>
+        <span class="rating-count">${ratingPercentages[5]}% (${ratingDistribution[5] || 0})</span>
       </div>
       <div class="rating-container">
-        <span class="rating-label">4 ★</span>
+        <span class="rating-label">4 &#9733;</span>
         <div class="rating-bar-container">
-          <div class="rating-bar" style="width: 20%"></div>
+          <div class="rating-bar" style="width: ${ratingPercentages[4]}%"></div>
         </div>
-        <span class="rating-count">20%</span>
+        <span class="rating-count">${ratingPercentages[4]}% (${ratingDistribution[4] || 0})</span>
       </div>
       <div class="rating-container">
-        <span class="rating-label">3 ★</span>
+        <span class="rating-label">3 &#9733;</span>
         <div class="rating-bar-container">
-          <div class="rating-bar" style="width: 5%"></div>
+          <div class="rating-bar" style="width: ${ratingPercentages[3]}%"></div>
         </div>
-        <span class="rating-count">5%</span>
+        <span class="rating-count">${ratingPercentages[3]}% (${ratingDistribution[3] || 0})</span>
       </div>
       <div class="rating-container">
-        <span class="rating-label">2 ★</span>
+        <span class="rating-label">2 &#9733;</span>
         <div class="rating-bar-container">
-          <div class="rating-bar" style="width: 3%"></div>
+          <div class="rating-bar" style="width: ${ratingPercentages[2]}%"></div>
         </div>
-        <span class="rating-count">3%</span>
+        <span class="rating-count">${ratingPercentages[2]}% (${ratingDistribution[2] || 0})</span>
       </div>
       <div class="rating-container">
-        <span class="rating-label">1 ★</span>
+        <span class="rating-label">1 &#9733;</span>
         <div class="rating-bar-container">
-          <div class="rating-bar" style="width: 2%"></div>
+          <div class="rating-bar" style="width: ${ratingPercentages[1]}%"></div>
         </div>
-        <span class="rating-count">2%</span>
+        <span class="rating-count">${ratingPercentages[1]}% (${ratingDistribution[1] || 0})</span>
       </div>
+      ${totalRatings === 0 ? '<p class="rating-note">Note: Rating distribution has been estimated based on average rating.</p>' : ''}
     </div>
   `;
-  
-  // Add event listener for book cover image error
-  const detailCover = detailsContainer.querySelector('.book-detail-cover');
-  detailCover.addEventListener('error', function() {
-    this.src = 'https://via.placeholder.com/150x200?text=No+Cover';
-  });
   
   modal.style.display = 'block';
 }
