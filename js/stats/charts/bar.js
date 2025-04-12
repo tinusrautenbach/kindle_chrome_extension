@@ -1,6 +1,18 @@
-// Bar chart functionality for stats visualization
+/**
+ * Bar chart functionality for stats visualization
+ * 
+ * This file contains functions for creating and managing horizontal bar charts that display
+ * genre distribution data with scrollable navigation controls.
+ */
 
-// Create a horizontal bar chart for genres
+/**
+ * Creates a horizontal bar chart for visualizing book genres distribution
+ * 
+ * @param {CanvasRenderingContext2D} ctx - The canvas rendering context
+ * @param {Array<Array<string|number>>} topSubGenres - Array of [genre, count] pairs for sub-genres
+ * @param {Array<Array<string|number>>} majorGenres - Array of [genre, count] pairs for major genres
+ * @returns {undefined} - Creates and renders the chart on the provided canvas context
+ */
 function createBarChart(ctx, topSubGenres, majorGenres) {
   // Create a Set of genre names to track duplicates
   const seenGenres = new Set();
@@ -74,7 +86,14 @@ function createBarChart(ctx, topSubGenres, majorGenres) {
   addScrollingControls(ctx.canvas, allGenres.length);
 }
 
-// Add scrolling controls for the bar chart
+/**
+ * Adds interactive scrolling controls below the bar chart
+ * This allows users to navigate through all genres when there are more than can fit on screen
+ * 
+ * @param {HTMLCanvasElement} canvas - The canvas element of the chart
+ * @param {number} totalItems - Total number of items/bars in the complete dataset
+ * @returns {undefined} - Appends control elements to the DOM after the canvas
+ */
 function addScrollingControls(canvas, totalItems) {
   const container = canvas.parentNode;
   
@@ -171,6 +190,10 @@ function addScrollingControls(canvas, totalItems) {
     }
   });
   
+  /**
+   * Updates the chart view when scrolling
+   * Changes which bars are visible and updates the info text and button states
+   */
   function updateChartView() {
     // Update the chart's scale options
     genreChart.options.scales.y.min = startIndex;
@@ -196,7 +219,13 @@ function addScrollingControls(canvas, totalItems) {
   downButton.style.backgroundColor = startIndex + viewSize >= totalItems ? '#ccc' : '#4285f4';
 }
 
-// Create a bar chart for super genres
+/**
+ * Creates a horizontal bar chart specifically for super genres (major categories)
+ * These are displayed separately in the stats summary section
+ * 
+ * @param {Object} majorGenreCounts - Object with genre names as keys and book counts as values
+ * @returns {undefined} - Creates and renders the chart in the superGenresChart container
+ */
 function createSuperGenresChart(majorGenreCounts) {
   // Convert to array and sort
   const superGenres = Object.entries(majorGenreCounts)

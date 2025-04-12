@@ -1,6 +1,19 @@
-// Bubble chart functionality for stats visualization
+/**
+ * Bubble chart functionality for stats visualization
+ * 
+ * This file provides functionality for creating interactive bubble charts
+ * that visually represent book genres with bubbles of varying sizes.
+ */
 
-// Create a bubble chart for genres
+/**
+ * Creates a bubble chart for visualizing book genres distribution
+ * Each genre is represented as a bubble with size proportional to the number of books
+ * 
+ * @param {CanvasRenderingContext2D} ctx - The canvas rendering context
+ * @param {Array<Array<string|number>>} topSubGenres - Array of [genre, count] pairs for sub-genres
+ * @param {Array<Array<string|number>>} majorGenres - Array of [genre, count] pairs for major genres
+ * @returns {undefined} - Creates and renders the bubble chart on the provided canvas context
+ */
 function createBubbleChart(ctx, topSubGenres, majorGenres) {
   // Combine genres
   const allGenres = [...topSubGenres].slice(0, 25);
@@ -12,7 +25,14 @@ function createBubbleChart(ctx, topSubGenres, majorGenres) {
   // Scale the radius based on the max count
   const maxCount = Math.max(...allGenres.map(g => g[1]));
   
-  // Function to check if a new bubble overlaps with existing ones
+  /**
+   * Checks if a new bubble position would overlap with existing bubbles
+   * 
+   * @param {number} x - X-coordinate of the new bubble's center
+   * @param {number} y - Y-coordinate of the new bubble's center
+   * @param {number} r - Radius of the new bubble
+   * @returns {boolean} - True if overlap detected, false otherwise
+   */
   function checkOverlap(x, y, r) {
     for (const pos of bubblePositions) {
       const dx = pos.x - x;
@@ -25,6 +45,7 @@ function createBubbleChart(ctx, topSubGenres, majorGenres) {
     return false;
   }
   
+  // Process each genre and create its bubble representation
   allGenres.forEach((g, i) => {
     // Calculate radius based on book count, with a logarithmic scale for better variation
     const radius = 10 + Math.log(g[1]) * 5;
@@ -69,6 +90,7 @@ function createBubbleChart(ctx, topSubGenres, majorGenres) {
     });
   });
   
+  // Create the chart with the generated data
   genreChart = new Chart(ctx, {
     type: 'bubble',
     data: {
@@ -109,7 +131,10 @@ function createBubbleChart(ctx, topSubGenres, majorGenres) {
     }
   });
   
-  // Draw labels on the bubbles
+  /**
+   * Custom Chart.js plugin to draw text labels inside the bubbles
+   * Labels are only shown if the bubble is large enough to contain the text
+   */
   const bubbleLabelPlugin = {
     id: 'bubbleLabels',
     afterDraw: (chart) => {

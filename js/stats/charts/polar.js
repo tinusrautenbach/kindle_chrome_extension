@@ -1,6 +1,20 @@
-// Polar chart functionality for stats visualization
+/**
+ * Polar chart functionality for stats visualization
+ * 
+ * This file provides functionality for creating interactive polar area charts
+ * as an alternative to treemap charts for genre distribution visualization.
+ */
 
-// Create a polar area chart for genres (replacement for treemap)
+/**
+ * Creates a polar area chart for visualizing book genres distribution
+ * This function is named createTreemapChart for consistency with the charting API
+ * but actually creates a polar area chart as a replacement for the treemap visualization
+ * 
+ * @param {CanvasRenderingContext2D} ctx - The canvas rendering context
+ * @param {Array<Array<string|number>>} topSubGenres - Array of [genre, count] pairs for sub-genres
+ * @param {Array<Array<string|number>>} majorGenres - Array of [genre, count] pairs for major genres
+ * @returns {undefined} - Creates and renders the polar chart on the provided canvas context
+ */
 function createTreemapChart(ctx, topSubGenres, majorGenres) {
   // Replace treemap with a polar area chart since treemap is not available
   console.log("Treemap not available, using polar area chart instead");

@@ -1,6 +1,16 @@
-// Contains UI update logic and display functions
+/**
+ * UI Management for the Kindle Library Statistics page
+ * 
+ * This file contains functions for updating and managing the user interface,
+ * displaying book information, and handling user interactions with the UI.
+ */
 
-// Update the library summary statistics
+/**
+ * Updates the library summary statistics in the UI
+ * Calculates metrics like total books, samples, average ratings, unique genres, and authors
+ * 
+ * @returns {undefined} - Updates the DOM elements with calculated statistics
+ */
 function updateLibrarySummary() {
   if (!libraryData || !libraryData.books) return;
   
@@ -47,7 +57,12 @@ function updateLibrarySummary() {
   document.getElementById('totalAuthors').textContent = authors.size;
 }
 
-// Update active genre filters display
+/**
+ * Updates the display of active genre filters in the UI
+ * Creates clickable badges for each active filter with remove functionality
+ * 
+ * @returns {undefined} - Updates the DOM with active filter badges
+ */
 function updateActiveGenreFilters() {
   const container = document.getElementById('activeGenreFilters');
   const clearBtn = document.getElementById('clearGenresBtn');
@@ -76,7 +91,13 @@ function updateActiveGenreFilters() {
   clearBtn.style.display = 'block';
 }
 
-// Display books in the book list
+/**
+ * Displays a list of books in the books list section
+ * Creates a card for each book with cover image, title, author, and rating
+ * 
+ * @param {Array<Object>} books - Array of book objects to display
+ * @returns {undefined} - Renders book cards in the book list container
+ */
 function displayBooks(books) {
   const booksListElement = document.getElementById('booksList');
   booksListElement.innerHTML = '';
@@ -161,7 +182,13 @@ function displayBooks(books) {
   });
 }
 
-// Show book details in modal
+/**
+ * Shows detailed information about a book in a modal dialog
+ * Includes cover image, metadata, description, ratings, and links
+ * 
+ * @param {Object} book - The book object containing all details to display
+ * @returns {undefined} - Populates and displays the book details modal
+ */
 function showBookDetails(book) {
   const modal = document.getElementById('bookModal');
   const detailsContainer = document.getElementById('bookDetails');

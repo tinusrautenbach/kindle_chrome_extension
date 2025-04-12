@@ -1,6 +1,16 @@
+/**
+ * Chart visualization functionality for Kindle library statistics
+ * 
+ * This file contains the core charting functionality used to visualize
+ * genre distributions and other statistical data from the user's Kindle library.
+ */
+
 // Add Chart.js plugin for data labels
 if (Chart) {
-  // Register the plugin to all charts
+  /**
+   * Custom Chart.js plugin for rendering data labels on bubble charts
+   * This plugin draws text labels inside bubbles when there's enough space
+   */
   Chart.register({
     id: 'datalabels',
     beforeDraw: function(chart) {
@@ -60,9 +70,19 @@ if (Chart) {
 
 // Chart visualization functions
 
+/**
+ * Reference to the current genre chart instance
+ * Allows destroying and recreating charts when switching visualization types
+ * @type {Object|null}
+ */
 let genreChart = null;
 
-// Create the genre chart
+/**
+ * Creates the genre distribution chart based on the current library data
+ * This function processes book genre data and initializes the appropriate chart type
+ * 
+ * @returns {undefined} - Creates and renders the genre chart in the appropriate container
+ */
 function createGenreChart() {
   if (!libraryData || !libraryData.books) return;
   
@@ -180,7 +200,13 @@ function createGenreChart() {
   updateChartType('bar', newCanvas, topSubGenres, sortedGenres);
 }
 
-// Create a bar chart for super genres
+/**
+ * Creates a bar chart specifically for super genres (major categories)
+ * This chart appears in the stats summary section
+ * 
+ * @param {Object} majorGenreCounts - Object with genre names as keys and book counts as values
+ * @returns {undefined} - Creates and renders the chart in the superGenresChart container
+ */
 function createSuperGenresChart(majorGenreCounts) {
   // Convert to array and sort
   const superGenres = Object.entries(majorGenreCounts)
@@ -249,7 +275,16 @@ function createSuperGenresChart(majorGenreCounts) {
   });
 }
 
-// Function to update chart type based on tab selection
+/**
+ * Updates the chart type based on user tab selection
+ * Destroys the existing chart and creates a new one of the selected type
+ * 
+ * @param {string} chartType - The type of chart to create ('bar', 'treemap', or 'bubble')
+ * @param {HTMLCanvasElement} canvas - The canvas element to render the chart on
+ * @param {Array<Array<string|number>>} topSubGenres - Array of [genre, count] pairs for sub-genres
+ * @param {Array<Array<string|number>>} majorGenres - Array of [genre, count] pairs for major genres
+ * @returns {undefined} - Creates and renders the selected chart type
+ */
 function updateChartType(chartType, canvas, topSubGenres, majorGenres) {
   // Destroy existing chart if it exists
   if (genreChart) {
@@ -273,7 +308,15 @@ function updateChartType(chartType, canvas, topSubGenres, majorGenres) {
   }
 }
 
-// Handle chart click to filter books
+/**
+ * Handles click events on chart elements (bars, bubbles, etc.)
+ * Filters the book list to show only books in the clicked genre
+ * 
+ * @param {Event} event - The click event
+ * @param {Array} elements - The chart elements that were clicked
+ * @param {Object} chart - The Chart.js chart instance
+ * @returns {undefined} - Updates filters and refreshes the book display
+ */
 function handleChartClick(event, elements, chart) {
   if (!elements || elements.length === 0) return;
   
@@ -316,7 +359,13 @@ function handleChartClick(event, elements, chart) {
   });
 }
 
-// Generate an array of colors for the chart
+/**
+ * Generates an array of colors to use in charts
+ * Provides a consistent color palette with fallback to random colors if needed
+ * 
+ * @param {number} count - The number of colors needed
+ * @returns {Array<string>} - Array of color strings (hex or HSL format)
+ */
 function generateColors(count) {
   const baseColors = [
     '#4CAF50', '#2196F3', '#FFC107', '#F44336', '#9C27B0',

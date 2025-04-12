@@ -1,6 +1,16 @@
-// Contains filtering and sorting logic
+/**
+ * Filtering and sorting functionality for Kindle Library Statistics
+ * 
+ * This file contains functions for filtering and sorting book data
+ * based on user-selected criteria like genres, authors, and search terms.
+ */
 
-// Filter books based on current filter settings
+/**
+ * Filter books based on current filter settings
+ * Applies all active filters (genres, samples, search terms, author) to the book collection
+ * 
+ * @returns {Array<Object>} - Array of book objects that match all filter criteria
+ */
 function filterBooks() {
   if (!libraryData || !libraryData.books) return [];
   
@@ -104,7 +114,13 @@ function filterBooks() {
   return sortBooks(filtered);
 }
 
-// Sort books based on selected criteria
+/**
+ * Sort books based on selected criteria
+ * Supports sorting by title, author, rating, or publication date
+ * 
+ * @param {Array<Object>} books - Array of book objects to sort
+ * @returns {Array<Object>} - Sorted array of book objects
+ */
 function sortBooks(books) {
   const sortOption = document.getElementById('sortOptions').value;
   
@@ -134,7 +150,12 @@ function sortBooks(books) {
   });
 }
 
-// Clear all genre filters
+/**
+ * Clear all active genre filters
+ * Removes all genre filter criteria and updates the UI
+ * 
+ * @returns {undefined} - Updates filter state and refreshes book display
+ */
 function clearAllGenreFilters() {
   if (!currentFilter.genres || currentFilter.genres.length === 0) {
     return;
@@ -150,4 +171,106 @@ function clearAllGenreFilters() {
   
   // Update title
   updateFilterTitle();
+}
+
+/**
+ * Add a genre to the filter criteria
+ * 
+ * @param {string} genre - The genre to add to the filter
+ * @returns {undefined} - Updates filter state and refreshes book display
+ */
+function addGenreFilter(genre) {
+  if (!currentFilter.genres) {
+    currentFilter.genres = [];
+  }
+  
+  if (!currentFilter.genres.includes(genre)) {
+    currentFilter.genres.push(genre);
+  }
+  
+  // Update UI
+  updateActiveGenreFilters();
+  
+  // Apply filters
+  displayBooks(filterBooks());
+  
+  // Update title
+  updateFilterTitle();
+}
+
+/**
+ * Remove a specific genre from the filter criteria
+ * 
+ * @param {string} genre - The genre to remove from the filter
+ * @returns {undefined} - Updates filter state and refreshes book display
+ */
+function removeGenreFilter(genre) {
+  if (!currentFilter.genres) {
+    return;
+  }
+  
+  const index = currentFilter.genres.indexOf(genre);
+  if (index !== -1) {
+    currentFilter.genres.splice(index, 1);
+  }
+  
+  // Update UI
+  updateActiveGenreFilters();
+  
+  // Apply filters
+  displayBooks(filterBooks());
+  
+  // Update title
+  updateFilterTitle();
+}
+
+/**
+ * Update the books list title based on active filters
+ * Shows information about which filters are currently applied
+ * 
+ * @returns {undefined} - Updates the books list title in the UI
+ */
+function updateFilterTitle() {
+  const titleElement = document.getElementById('filterTitle');
+  if (!titleElement) return;
+  
+  let title = 'Books';
+  
+  if (currentFilter.genres && currentFilter.genres.length > 0) {
+    title += ` - Genres: ${currentFilter.genres.join(', ')}`;
+  }
+  
+  if (currentFilter.author) {
+    title += ` - Author: ${currentFilter.author}`;
+  }
+  
+  if (currentFilter.searchTerm) {
+    title += ` - Search: "${currentFilter.searchTerm}"`;
+  }
+  
+  titleElement.textContent = title;
+}
+
+/**
+ * Find all unique genres in the library data
+ * This is used for populating genre search results
+ * 
+ * @returns {Array<string>} - Array of all unique genre names
+ */
+function findAllGenres() {
+  const genres = new Set();
+  
+  if (!libraryData || !libraryData.books) return [];
+  
+  libraryData.books.forEach(book => {
+    if (book.goodreads && book.goodreads.gd_genre && Array.isArray(book.goodreads.gd_genre)) {
+      book.goodreads.gd_genre.forEach(genreObj => {
+        if (genreObj && genreObj.name) {
+          genres.add(genreObj.name.trim());
+        }
+      });
+    }
+  });
+  
+  return Array.from(genres);
 }
